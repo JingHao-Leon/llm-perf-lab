@@ -10,16 +10,29 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from perf_lab.bench import BenchReport, bench, save  # noqa: E402
-from triton_kernels.fused_rmsnorm import rmsnorm_triton, softmax_triton, triton_available  # noqa: E402
+
+
+def _load_kernels():
+    """Import Triton kernels only when the platform actually supports them."""
+    from triton_kernels.fused_rmsnorm import triton_available
+
+    if not triton_available():
+        return None
+    from triton_kernels.fused_rmsnorm import rmsnorm_triton, softmax_triton
+
+    return rmsnorm_triton, softmax_triton
+
 
 RESULTS = Path(__file__).parent / "results"
 
 
 def main() -> None:
-    if not triton_available():
+    kernels = _load_kernels()
+    if kernels is None:
         print("triton/CUDA not available on this machine — skipped. "
               "Run on a CUDA GPU: uv run python benchmarks/bench_triton.py")
         return
+    rmsnorm_triton, softmax_triton = kernels
     device = torch.device("cuda")
     torch.manual_seed(0)
     M, N = 4096, 4096
