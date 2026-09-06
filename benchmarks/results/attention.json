@@ -1,0 +1,60 @@
+{
+  "title": "Attention backends (B=1, H=8, hd=64, dtype=torch.float16)",
+  "device": "mps",
+  "rows": [
+    {
+      "name": "T=512 naive",
+      "value": 2.4432,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=512 chunked",
+      "value": 1.1607,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=512 sdpa",
+      "value": 0.4405,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=1024 naive",
+      "value": 4.9137,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=1024 chunked",
+      "value": 4.8039,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=1024 sdpa",
+      "value": 1.2318,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=2048 naive",
+      "value": 11.3396,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=2048 chunked",
+      "value": 13.096,
+      "unit": "ms",
+      "note": "median of 5"
+    },
+    {
+      "name": "T=2048 sdpa",
+      "value": 2.436,
+      "unit": "ms",
+      "note": "median of 5"
+    }
+  ]
+}

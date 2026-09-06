@@ -1,0 +1,66 @@
+{
+  "title": "Decode with/without KV cache (new=128, 4L×256d, 4.5M params)",
+  "device": "mps",
+  "rows": [
+    {
+      "name": "prompt=128 no cache",
+      "value": 0.8904,
+      "unit": "s",
+      "note": "143.8 tok/s"
+    },
+    {
+      "name": "prompt=128 KV cache",
+      "value": 0.8611,
+      "unit": "s",
+      "note": "148.6 tok/s"
+    },
+    {
+      "name": "prompt=128 speedup",
+      "value": 1.034,
+      "unit": "x",
+      "note": "no-cache / cache"
+    },
+    {
+      "name": "prompt=512 no cache",
+      "value": 1.3107,
+      "unit": "s",
+      "note": "97.7 tok/s"
+    },
+    {
+      "name": "prompt=512 KV cache",
+      "value": 0.738,
+      "unit": "s",
+      "note": "173.5 tok/s"
+    },
+    {
+      "name": "prompt=512 speedup",
+      "value": 1.7762,
+      "unit": "x",
+      "note": "no-cache / cache"
+    },
+    {
+      "name": "prompt=1024 no cache",
+      "value": 2.5869,
+      "unit": "s",
+      "note": "49.5 tok/s"
+    },
+    {
+      "name": "prompt=1024 KV cache",
+      "value": 0.7946,
+      "unit": "s",
+      "note": "161.1 tok/s"
+    },
+    {
+      "name": "prompt=1024 speedup",
+      "value": 3.2555,
+      "unit": "x",
+      "note": "no-cache / cache"
+    },
+    {
+      "name": "cache memory @block_size",
+      "value": 9280.0,
+      "unit": "KiB",
+      "note": "2*n_layers*B*H*len*hd*bytes"
+    }
+  ]
+}
