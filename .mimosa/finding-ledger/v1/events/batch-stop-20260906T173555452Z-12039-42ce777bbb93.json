@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "mimosa-finding-ledger-batch/v1",
+  "batchId": "stop-20260906T173555452Z-12039-42ce777bbb93",
+  "runId": "20260906T173555452Z-12039-42ce777bbb93",
+  "runStatus": "inconclusive",
+  "coverage": {
+    "status": "partial",
+    "reasons": [
+      {
+        "code": "baseline_partial",
+        "stage": "baseline",
+        "target": ".",
+        "detail": "baseline capture had enumeration or snapshot errors",
+        "affectsCompletion": true
+      },
+      {
+        "code": "project_check_failed",
+        "stage": "baseline",
+        "target": ".",
+        "detail": "baseline_partial: baseline capture had enumeration or snapshot errors",
+        "affectsCompletion": true
+      }
+    ]
+  },
+  "source": {
+    "component": "zcode-hook",
+    "operationId": "Stop"
+  },
+  "revision": "6d527bfc84027e3d95904b5201698d00dc281710",
+  "diffHash": "9d04ee5a969541ad5be4f54d9d81b935824974ea3752a9189fd354bb2315e100",
+  "rulesVersion": "unavailable",
+  "sessionHash": "3287675c0382f81054d354399f15db054cfd0c986612fe406930eb0c059a5106",
+  "reportRef": ".mimosa/reports/task-review-sess_1fb22544-959c-48b1-be4d-b66df007736f-20260906T173555452Z-12039-42ce777bbb93.json",
+  "events": [],
+  "observedFindingIds": [],
+  "verifiedFiles": [
+    {
+      "file": "perf_lab/model.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "perf_lab/kv_cache.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "perf_lab/quant.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "perf_lab/attention.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "perf_lab/bench.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "triton_kernels/fused_rmsnorm.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "tests/test_attention.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "tests/test_kv_cache.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "tests/test_quant.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "benchmarks/bench_attention.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "benchmarks/bench_kv_cache.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "benchmarks/bench_quant.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    },
+    {
+      "file": "benchmarks/bench_triton.py",
+      "direct": "complete",
+      "projectContext": "partial"
+    }
+  ],
+  "recordedAt": "2026-09-06T17:35:55.728Z"
+}

@@ -107,14 +107,8 @@ class TinyGPT(nn.Module):
         self,
         idx: torch.Tensor,
         cache: KVCache | None = None,
-        commit_tokens: int | None = None,
-        defer_commit: bool = False,
     ) -> torch.Tensor:
-        """idx: (B, T) token ids. With a cache, T may be 1 for incremental decoding.
-
-        ``commit_tokens`` lets a speculative-decoding verifier commit only the
-        accepted prefix of the appended tokens (default: commit all).
-        """
+        """idx: (B, T) token ids. With a cache, T may be 1 for incremental decoding."""
         B, T = idx.shape
         total_len = T if cache is None else cache.seq_len + T
         assert total_len <= self.cfg.block_size, "sequence exceeds block_size"
@@ -122,11 +116,8 @@ class TinyGPT(nn.Module):
         x = self.embed(idx) + self.pos_embed(pos)[None, :, :]
         for i, block in enumerate(self.blocks):
             x = block(x, cache, i)
-        if cache is not None and not defer_commit:
-            if commit_tokens is None:
-                cache.commit(T)
-            else:
-                cache.commit_upto(commit_tokens)
+        if cache is not None:
+            cache.commit(T)
         return self.head(self.ln_f(x))
 
     def num_params(self) -> int:

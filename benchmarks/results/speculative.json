@@ -1,0 +1,48 @@
+{
+  "title": "Speculative decoding (draft=target truncated 2L×256d, target 6L×256d 4.9M, prompt=256, new=256)",
+  "device": "mps",
+  "rows": [
+    {
+      "name": "target greedy (KV cache)",
+      "value": 1.6394,
+      "unit": "s",
+      "note": "156 tok/s"
+    },
+    {
+      "name": "speculative γ=2",
+      "value": 3.0621,
+      "unit": "s",
+      "note": "84 tok/s, accept 100%, 3.01 tok/forward"
+    },
+    {
+      "name": "γ=2 speedup",
+      "value": 0.5354,
+      "unit": "x",
+      "note": ""
+    },
+    {
+      "name": "speculative γ=4",
+      "value": 2.2535,
+      "unit": "s",
+      "note": "114 tok/s, accept 100%, 5.02 tok/forward"
+    },
+    {
+      "name": "γ=4 speedup",
+      "value": 0.7275,
+      "unit": "x",
+      "note": ""
+    },
+    {
+      "name": "speculative γ=8",
+      "value": 1.6695,
+      "unit": "s",
+      "note": "153 tok/s, accept 100%, 8.83 tok/forward"
+    },
+    {
+      "name": "γ=8 speedup",
+      "value": 0.9819,
+      "unit": "x",
+      "note": ""
+    }
+  ]
+}

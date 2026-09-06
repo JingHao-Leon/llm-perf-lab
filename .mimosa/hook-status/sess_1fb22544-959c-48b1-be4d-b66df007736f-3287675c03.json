@@ -1,14 +1,14 @@
 {
   "schemaVersion": "mimosa-hook-status/v1",
-  "recordedAt": "2026-09-06T17:17:40.984Z",
+  "recordedAt": "2026-09-06T19:11:00.959Z",
   "sessionId": "sess_1fb22544-959c-48b1-be4d-b66df007736f",
   "event": "PostToolUse",
   "toolName": "Edit",
-  "file": "/Users/ahs/.zcode/workspace/default/ai-projects/lora-lab/examples/train_qwen_gpu.py",
-  "outcome": "inconclusive",
-  "coverage": "partial",
+  "file": "benchmarks/bench_speculative.py",
+  "outcome": "clear",
+  "coverage": "complete",
   "findingCount": 0,
-  "durationMs": 5,
+  "durationMs": 6,
   "hostState": "hook_complete",
   "reportHint": ".mimosa/reports/"
 }

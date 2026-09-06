@@ -48,19 +48,8 @@ class KVCache:
             batch_size=batch_size,
         )
 
-    def _grow_batch(self, batch: int) -> None:
-        """Lazily widen the pre-allocated buffers when a larger batch arrives."""
-        new_k = torch.zeros(self.k.shape[0], batch, *self.k.shape[2:],
-                            dtype=self.k.dtype, device=self.k.device)
-        new_v = torch.zeros_like(new_k)
-        new_k[:, : self.k.shape[1]] = self.k
-        new_v[:, : self.v.shape[1]] = self.v
-        self.k, self.v = new_k, new_v
-
     def append(self, layer_idx: int, k: torch.Tensor, v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Write the new k/v and return the full history (valid prefix + new)."""
-        if k.shape[0] != self.k.shape[1]:
-            self._grow_batch(k.shape[0])
         T = k.shape[2]
         self.k[layer_idx, :, :, self._len:self._len + T, :] = k.to(self.k.dtype)
         self.v[layer_idx, :, :, self._len:self._len + T, :] = v.to(self.v.dtype)
@@ -71,20 +60,6 @@ class KVCache:
     def commit(self, n_tokens: int) -> None:
         assert n_tokens == self._pending, "commit must match the appended token count"
         self._len += n_tokens
-        self._pending = 0
-
-    def commit_upto(self, n_tokens: int) -> None:
-        """Commit only the first n_tokens of the pending append (speculative
-        decoding rejects the tail); the rejected slots get overwritten later."""
-        assert 0 < n_tokens <= self._pending, "commit_upto within pending range"
-        self._len += n_tokens
-        self._pending = 0
-
-    def rollback(self, n: int) -> None:
-        """Rewind the committed length to n (buffers keep their data; the
-        prefix view simply shrinks)."""
-        assert 0 <= n <= self._len
-        self._len = n
         self._pending = 0
 
     @property
