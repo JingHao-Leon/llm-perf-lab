@@ -8,37 +8,51 @@
 
 > 与其背"FlashAttention 是 IO 感知算法"，不如亲手写出 KV Cache、看着它把解码吞吐提升 3.3 倍、把量化误差压到 0.8%。这个仓库里的每个优化都有**正确性测试**（结果必须与朴素实现一致）和**性能基准**（数据必须可复现）。
 
-## 📊 实测结果（Apple M-series · MPS · torch 2.14，复现命令见下）
+## 📊 实测结果
 
-### KV Cache：解码加速随 prompt 增长
+双设备实测：**RTX 3090 24GB（CUDA · torch 2.11+cu128）** 与 Apple M-series（MPS · torch 2.14），原始数据在 `benchmarks/results/`（按设备分目录），全部可用仓库内脚本一键复现。
+
+### KV Cache：从 launch 开销主导到 O(T²) 主导的完整 crossover（RTX 3090 · 8L×512d · 35M 参数）
 
 | prompt 长度 | 无 cache | KV Cache | 加速比 |
 |---|---|---|---|
-| 128 | 143.8 tok/s | 148.6 tok/s | 1.03x |
-| 512 | 97.7 tok/s | 173.5 tok/s | **1.78x** |
-| 1024 | 49.5 tok/s | 161.1 tok/s | **3.26x** |
+| 512 | 153.6 tok/s | 138.7 tok/s | 0.90x ⚠️ |
+| 1024 | 74.7 tok/s | 88.7 tok/s | 1.19x |
+| 2048 | 22.6 tok/s | 77.0 tok/s | 3.41x |
+| 4096 | 0.2 tok/s | 41.2 tok/s | **179.4x** 🚀 |
 
-> 短 prompt 时收益不明显（kernel launch 开销主导），这正是"为什么要有 prefill/decode 分离与 continuous batching"的直觉来源。测试保证：**开/关 cache 的贪心解码输出逐 token 相同**。
+> 这张表是本仓库最有讲头的实测：4096 长度下无 cache 重计算要 **557 秒**，KV cache 只要 **3.1 秒**——O(T²) 与 O(T) 的差距在长上下文上被 GPU 彻底放大；而 512 长度时 cache 反而慢 10%，因为每步重算前缀的计算量还小，Python 循环 + kernel launch 开销主导。**crossover 点的存在本身就是"为什么要有 prefill/decode 分离"的实证**。（MPS 上同款 crossover 见 `benchmarks/results/kv_cache.md`，1024 时 3.26x）
 
-### Attention 后端对比（fp16，B=1，H=8，hd=64）
+### Attention 后端（RTX 3090 · fp16 · B=1 · H=8 · hd=64）
 
-| 序列长度 | naive（O(T²) 显存） | chunked（分块降峰值） | SDPA（融合内核） |
-|---|---|---|---|
-| 512 | 2.44 ms | 1.16 ms | **0.44 ms** |
-| 1024 | 4.91 ms | 4.80 ms | **1.23 ms** |
-| 2048 | 11.34 ms | 13.10 ms | **2.44 ms**（4.7x） |
+| 序列长度 | naive（O(T²) 显存） | chunked（分块降峰值） | SDPA（融合内核） | SDPA 加速 |
+|---|---|---|---|---|
+| 512 | 0.207 ms | 0.758 ms | **0.057 ms** | 3.6x |
+| 1024 | 0.321 ms | 1.954 ms | **0.101 ms** | 3.2x |
+| 2048 | 1.112 ms | 3.470 ms | **0.205 ms** | 5.4x |
+| 4096 | 4.452 ms | 6.527 ms | **0.514 ms** | 8.7x |
+| 8192 | —(跳过) | 22.769 ms | **1.553 ms** | 14.7x |
 
-> SDPA 在 T=2048 时快 4.7 倍——这就是融合内核省下显存读写的直接体现。测试保证三种实现**数值一致**（rtol 1e-4）。
+> 随长度增长 SDPA 优势从 3.6x 拉到 14.7x——融合内核省下的显存读写量与 T 成正比，这正是 FlashAttention "IO-aware" 论文的实测注脚。三种实现数值一致性由测试锁定（rtol 1e-4）。
 
-### 权重量化：精度损失 vs 显存占用（2048×2048 Linear，batch 64）
+### 权重量化（RTX 3090 · 2048×2048 Linear · batch 64）
 
 | 方案 | 权重体积 | 相对误差 | 耗时 |
 |---|---|---|---|
-| fp16 基线 | 16 MiB | 0 | 0.99 ms |
-| INT8（逐通道对称） | 4 MiB（**4.0x 压缩**） | **0.83%** | 2.08 ms* |
-| NF4（QLoRA 同款 16 级电平） | 4.25 MiB（3.76x vs fp32） | 9.20% | 3.02 ms* |
+| fp16 基线 | 16 MiB | 0 | 0.064 ms |
+| INT8（逐通道对称） | 4 MiB（**4.0x 压缩**） | **0.83%** | 0.100 ms* |
+| NF4（QLoRA 同款 16 电平） | 4.25 MiB（3.76x vs fp32） | 9.20% | 0.229 ms* |
 
-> *本实现按"反量化再计算"教学路径实现；生产引擎（llama.cpp / bitsandbytes）将反量化融合进 GEMM，故不以此耗时作为量化收益论据——**压缩比与数值契约**才是重点。NF4 电平表逐字转录自 QLoRA 论文（Dettmers et al. 2023），块缩放格式与 bitsandbytes 一致。
+> *按"反量化再计算"教学路径实现；生产引擎将反量化融合进 GEMM。压缩比与数值契约是重点。
+
+### Triton 融合算子（3090 + triton-windows · 4096×4096 fp16）
+
+| 内核 | PyTorch eager | 本仓 Triton | 结果 |
+|---|---|---|---|
+| RMSNorm | 0.136 ms | 0.180 ms | 0.75x |
+| Softmax | 0.186 ms | 0.219 ms | 0.85x |
+
+> 诚实结论：**数值验证通过（rtol/atol 1e-2），但没打过 PyTorch eager**。两个原因：triton-windows 是社区移植版（编译质量低于 Linux 官方版），且本内核是未调优的教学实现（num_warps/block size 未扫参）；PyTorch eager 底层本来就是高度优化的 CUDA 库。Linux + 官方 Triton + 调优才是这类内核的正确打开方式——正确性已由测试锁定，性能留作 Roadmap。
 
 ## 🧩 项目结构
 
@@ -59,10 +73,10 @@ tests/               # 14 个测试：数值等价、误差上界、贪心输出
 ```bash
 uv sync                # 或 pip install torch numpy pytest
 uv run pytest          # 14 tests passed
-uv run python benchmarks/bench_kv_cache.py    # 复现 KV Cache 数据
-uv run python benchmarks/bench_attention.py   # 复现 attention 数据
+uv run python benchmarks/bench_kv_cache.py --prompts 512 1024 2048 4096 --d-model 512 --layers 8 --heads 16   # 复现 3090 表
+uv run python benchmarks/bench_attention.py --seq 512 1024 2048 4096 8192  # 复现 attention 表
 uv run python benchmarks/bench_quant.py       # 复现量化数据
-uv run python benchmarks/bench_triton.py      # 需要 CUDA GPU
+uv run python benchmarks/bench_triton.py      # CUDA GPU + triton
 ```
 
 CPU / MPS / CUDA 均可运行核心测试与前三项基准（设备自动选择）；Triton 内核仅在 CUDA 上运行，无 GPU 时优雅跳过。

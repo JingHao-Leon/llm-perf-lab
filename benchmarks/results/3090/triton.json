@@ -1,0 +1,48 @@
+{
+  "title": "Triton fused kernels (4096x4096 fp16)",
+  "device": "cuda",
+  "rows": [
+    {
+      "name": "rmsnorm eager",
+      "value": 0.1357,
+      "unit": "ms",
+      "note": ""
+    },
+    {
+      "name": "rmsnorm triton",
+      "value": 0.1801,
+      "unit": "ms",
+      "note": ""
+    },
+    {
+      "name": "rmsnorm speedup",
+      "value": 0.7535,
+      "unit": "x",
+      "note": ""
+    },
+    {
+      "name": "softmax eager",
+      "value": 0.1861,
+      "unit": "ms",
+      "note": ""
+    },
+    {
+      "name": "softmax triton",
+      "value": 0.2192,
+      "unit": "ms",
+      "note": ""
+    },
+    {
+      "name": "softmax speedup",
+      "value": 0.849,
+      "unit": "x",
+      "note": ""
+    },
+    {
+      "name": "correctness",
+      "value": 1,
+      "unit": "pass",
+      "note": "triton vs eager, rtol/atol 1e-2"
+    }
+  ]
+}

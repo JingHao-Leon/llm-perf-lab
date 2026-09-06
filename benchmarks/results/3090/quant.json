@@ -1,0 +1,42 @@
+{
+  "title": "Quantization: fp16 vs int8 vs nf4 (2048x2048 linear, batch 64)",
+  "device": "cuda",
+  "rows": [
+    {
+      "name": "fp matmul",
+      "value": 0.0643,
+      "unit": "ms",
+      "note": "weight 16384 KiB"
+    },
+    {
+      "name": "int8 matmul",
+      "value": 0.1004,
+      "unit": "ms",
+      "note": "weight 4096 KiB, rel err 0.83%"
+    },
+    {
+      "name": "int8 compression",
+      "value": 4.0,
+      "unit": "x",
+      "note": "vs fp32 weight"
+    },
+    {
+      "name": "nf4 matmul",
+      "value": 0.2292,
+      "unit": "ms",
+      "note": "weight 4352 KiB, rel err 9.20%"
+    },
+    {
+      "name": "nf4 compression",
+      "value": 3.7647,
+      "unit": "x",
+      "note": "vs fp32 weight"
+    },
+    {
+      "name": "nf4 quantize",
+      "value": 2.2608,
+      "unit": "ms",
+      "note": "one-time, per weight tensor"
+    }
+  ]
+}
