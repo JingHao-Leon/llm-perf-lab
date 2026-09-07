@@ -45,6 +45,29 @@
 
 > *按"反量化再计算"教学路径实现；生产引擎将反量化融合进 GEMM。压缩比与数值契约是重点。
 
+### 投机解码（RTX 3090）
+
+从零实现的 draft-verify 循环（`perf_lab/speculative.py`）：小模型草拟 γ 个 token → 大模型**一次前向并行验证** → KV cache 回退到接受前缀。金标准测试锁定**输出与 target 逐 token 一致**。
+
+自研实现（draft = target 的浅层截断，6L×256d target / 2L×256d draft，接受率 100%）：
+
+| γ | 每 target 前向产出 | 耗时 | 加速比 |
+|---|---|---|---|
+| 2 | 3.01 tok | 1.51 s | **1.41x** |
+| 4 | 5.02 tok | 1.43 s | **1.49x** |
+| 8 | 8.83 tok | 1.16 s | **1.83x** |
+
+> γ 越大每次验证摊薄越多，加速比单调上升——算法定性正确。同一个循环在 MPS 上 0.98x（kernel launch 开销主导的小模型上投机解码无从加速），平台决定上限。
+
+真实模型对照（transformers assisted generation，Qwen2.5 家族，数据在 `results/`）：
+
+| 配置 | 结果 | 根因分析 |
+|---|---|---|
+| 1.5B target + 0.5B draft | 0.86x | draft/target 参数比仅 3:1，draft 成本占比过高 |
+| 7B target + 0.5B draft | 0.55x | 7B 基线仅 13 tok/s——瓶颈在 generate 编排开销而非 GPU 算力（3090 正常应 30+），此基线下 draft 往返永远亏 |
+
+> **诚实的负结果**：HF transformers 的 assisted decoding 在未优化推理栈上不产生收益；投机解码的落地前提是 vLLM 级别的高效 base forward。自研实现证明算法正确性，真实模型实验定位了工程边界——两层结论合起来才是完整认知。（复现：`examples/speculative_qwen_gpu.py --target Qwen/Qwen2.5-7B-Instruct`）
+
 ### Triton 融合算子（3090 + triton-windows · 4096×4096 fp16）
 
 | 内核 | PyTorch eager | 本仓 Triton | 结果 |

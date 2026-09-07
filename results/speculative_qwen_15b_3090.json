@@ -1,0 +1,59 @@
+{
+  "target": "Qwen/Qwen2.5-1.5B-Instruct",
+  "draft": "Qwen/Qwen2.5-0.5B-Instruct",
+  "dtype": "bfloat16",
+  "max_new_tokens": 256,
+  "do_sample": false,
+  "all_outputs_identical": false,
+  "rows": [
+    {
+      "prompt": "一元二次方程 x^2 - 5x + 6 = 0 的解是什么？请给出过程。",
+      "tokens": 256,
+      "plain_s": 23.46,
+      "spec_s": 26.3,
+      "plain_tok_s": 10.9,
+      "spec_tok_s": 9.7,
+      "identical_output": false
+    },
+    {
+      "prompt": "计算 (123 + 456) * 2 - 78，写出步骤。",
+      "tokens": 129,
+      "plain_s": 10.91,
+      "spec_s": 10.37,
+      "plain_tok_s": 11.8,
+      "spec_tok_s": 12.3,
+      "identical_output": false
+    },
+    {
+      "prompt": "一个三角形底边长 6，高 4，面积是多少？",
+      "tokens": 256,
+      "plain_s": 24.88,
+      "spec_s": 24.86,
+      "plain_tok_s": 10.3,
+      "spec_tok_s": 10.3,
+      "identical_output": false
+    },
+    {
+      "prompt": "把 0.375 表示为最简分数。",
+      "tokens": 256,
+      "plain_s": 22.31,
+      "spec_s": 26.58,
+      "plain_tok_s": 11.5,
+      "spec_tok_s": 9.6,
+      "identical_output": false
+    },
+    {
+      "prompt": "9 乘以 12 再减去 27 等于多少？",
+      "tokens": 106,
+      "plain_s": 9.18,
+      "spec_s": 17.07,
+      "plain_tok_s": 11.5,
+      "spec_tok_s": 6.2,
+      "identical_output": false
+    }
+  ],
+  "total_plain_s": 90.75,
+  "total_spec_s": 105.19,
+  "speedup": 0.86,
+  "gpu": "NVIDIA GeForce RTX 3090"
+}
