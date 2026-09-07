@@ -33,7 +33,8 @@ PROMPTS = [
 def timed_generate(model, tok, prompt: str, assistant=None, assistant_tok=None,
                    max_new_tokens: int = 256):
     ids = tok(prompt, return_tensors="pt").input_ids.cuda()
-    kwargs = {"assistant_model": assistant, "pad_token_id": tok.eos_token_id}
+    kwargs = {"assistant_model": assistant, "pad_token_id": tok.eos_token_id,
+              "tokenizer": tok}
     if assistant_tok is not None:
         kwargs["assistant_tokenizer"] = assistant_tok
     t0 = time.perf_counter()
