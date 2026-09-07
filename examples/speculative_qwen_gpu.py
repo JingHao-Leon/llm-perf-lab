@@ -79,7 +79,7 @@ def main() -> None:
     }
     out = Path("results/speculative_qwen_3090.json")
     out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+    out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nspeedup: {result['speedup']}x | outputs identical: {identical}")
     print(f"saved: {out}")
 
