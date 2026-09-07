@@ -1,10 +1,10 @@
 {
   "schemaVersion": "mimosa-hook-status/v1",
-  "recordedAt": "2026-09-06T19:11:00.959Z",
+  "recordedAt": "2026-09-07T04:08:51.217Z",
   "sessionId": "sess_1fb22544-959c-48b1-be4d-b66df007736f",
   "event": "PostToolUse",
   "toolName": "Edit",
-  "file": "benchmarks/bench_speculative.py",
+  "file": "examples/speculative_qwen_gpu.py",
   "outcome": "clear",
   "coverage": "complete",
   "findingCount": 0,

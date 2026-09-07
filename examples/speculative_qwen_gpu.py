@@ -1,15 +1,17 @@
 """Real-model speculative decoding on a CUDA GPU (HF assisted generation).
 
-Qwen2.5-0.5B-Instruct drafts, Qwen2.5-1.5B-Instruct verifies via one forward
+Qwen2.5-0.5B-Instruct drafts, a larger Qwen target verifies via one forward
 per round — transformers' ``assistant_model`` path implements exactly the
 algorithm in perf_lab/speculative.py, at production grade.
 
-    uv run python examples/speculative_qwen_gpu.py
-Requires a CUDA GPU; measured target: RTX 3090 24GB.
+    uv run python examples/speculative_qwen_gpu.py                     # 7B + 0.5B (textbook 14:1)
+    uv run python examples/speculative_qwen_gpu.py --target Qwen/Qwen2.5-1.5B-Instruct
+Requires a CUDA GPU; measured target: RTX 3090 24GB (7B bf16 ~14 GB weights).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
@@ -32,7 +34,7 @@ def timed_generate(model, tok, prompt: str, assistant=None, max_new_tokens: int 
     ids = tok(prompt, return_tensors="pt").input_ids.cuda()
     t0 = time.perf_counter()
     out = model.generate(
-        ids, max_new_tokens=max_new_tokens, do_sample=False,
+        ids, max_new_tokens=max_new_tokens, do_sample=False, num_beams=1,
         assistant_model=assistant, pad_token_id=tok.eos_token_id,
     )
     dt = time.perf_counter() - t0
@@ -41,16 +43,24 @@ def timed_generate(model, tok, prompt: str, assistant=None, max_new_tokens: int 
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--target", default="Qwen/Qwen2.5-7B-Instruct")
+    ap.add_argument("--draft", default="Qwen/Qwen2.5-0.5B-Instruct")
+    args = ap.parse_args()
+
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     assert torch.cuda.is_available(), "needs a CUDA GPU"
-    tok = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-1.5B-Instruct")
+    tok = AutoTokenizer.from_pretrained(args.target)
     target = AutoModelForCausalLM.from_pretrained(
-        "Qwen/Qwen2.5-1.5B-Instruct", torch_dtype=torch.bfloat16, device_map="auto")
+        args.target, torch_dtype=torch.bfloat16, device_map="auto")
     draft = AutoModelForCausalLM.from_pretrained(
-        "Qwen/Qwen2.5-0.5B-Instruct", torch_dtype=torch.bfloat16, device_map="auto")
+        args.draft, torch_dtype=torch.bfloat16, device_map="auto")
     target.eval(), draft.eval()
+    # assisted generation merges the draft's generation_config into the run;
+    # aligning them keeps the greedy comparison apples-to-apples
+    draft.generation_config = target.generation_config
 
     rows = []
     total_plain = total_spec = 0.0
@@ -70,7 +80,7 @@ def main() -> None:
               f"| {'same' if same else 'DIFF'}")
 
     result = {
-        "target": "Qwen/Qwen2.5-1.5B-Instruct", "draft": "Qwen/Qwen2.5-0.5B-Instruct",
+        "target": args.target, "draft": args.draft,
         "dtype": "bfloat16", "max_new_tokens": 256, "do_sample": False,
         "all_outputs_identical": identical, "rows": rows,
         "total_plain_s": round(total_plain, 2), "total_spec_s": round(total_spec, 2),
