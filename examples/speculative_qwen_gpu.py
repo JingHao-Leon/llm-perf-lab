@@ -30,12 +30,15 @@ PROMPTS = [
 ]
 
 
-def timed_generate(model, tok, prompt: str, assistant=None, max_new_tokens: int = 256):
+def timed_generate(model, tok, prompt: str, assistant=None, assistant_tok=None,
+                   max_new_tokens: int = 256):
     ids = tok(prompt, return_tensors="pt").input_ids.cuda()
+    kwargs = {"assistant_model": assistant, "pad_token_id": tok.eos_token_id}
+    if assistant_tok is not None:
+        kwargs["assistant_tokenizer"] = assistant_tok
     t0 = time.perf_counter()
     out = model.generate(
-        ids, max_new_tokens=max_new_tokens, do_sample=False, num_beams=1,
-        assistant_model=assistant, pad_token_id=tok.eos_token_id,
+        ids, max_new_tokens=max_new_tokens, do_sample=False, num_beams=1, **kwargs,
     )
     dt = time.perf_counter() - t0
     n_new = out.shape[1] - ids.shape[1]
@@ -53,6 +56,7 @@ def main() -> None:
 
     assert torch.cuda.is_available(), "needs a CUDA GPU"
     tok = AutoTokenizer.from_pretrained(args.target)
+    draft_tok = AutoTokenizer.from_pretrained(args.draft)
     target = AutoModelForCausalLM.from_pretrained(
         args.target, torch_dtype=torch.bfloat16, device_map="auto")
     draft = AutoModelForCausalLM.from_pretrained(
@@ -67,7 +71,8 @@ def main() -> None:
     identical = True
     for prompt in PROMPTS:
         text_p, n_p, t_p = timed_generate(target, tok, prompt)
-        text_s, n_s, t_s = timed_generate(target, tok, prompt, assistant=draft)
+        text_s, n_s, t_s = timed_generate(target, tok, prompt, assistant=draft,
+                                          assistant_tok=draft_tok)
         total_plain += t_p
         total_spec += t_s
         same = text_p == text_s
